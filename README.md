@@ -96,12 +96,30 @@ src/main/java/com/mendel/challenge/
 Dependencies flow **controller → service → repository** and are wired by Spring through
 **constructor injection** (final fields, single constructor, no `@Autowired` needed).
 
-`Item` is an example resource that goes through every layer. Replace it with your own domain.
+### Data model
+
+`Transaction` entity (`model/Transaction.java`), stored in the `transactions` table:
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `BIGINT` (Java `Long`) | Primary key, sequential (1, 2, 3…), generated from the `transactions_seq` database sequence |
+| `amount` | `REAL` (Java `float`) | Required |
+| `type` | `VARCHAR(100)` (Java `String`) | Required, not blank, max 100 characters |
+| `parent_id` | `BIGINT`, nullable | Foreign key to `transactions.id` (the parent transaction) |
 
 ### Endpoints
 
-- `GET /api/items`, `POST /api/items`, `GET /api/items/{id}`: example endpoints
-- `GET /actuator/health`: health check
+| Method | Path | Body | Response |
+|---|---|---|---|
+| `POST` | `/api/transactions` | `{"amount": 10.5, "type": "cars", "parentId": 123}` (`parentId` optional) | `201` + the created transaction |
+| `GET` | `/api/transactions` | | `200` + list of transactions |
+| `GET` | `/api/transactions/{id}` | | `200` + the transaction, or `404` |
+
+A transaction looks like `{"id": 1, "amount": 10.5, "type": "cars", "parentId": null}`.
+Errors: `400` if `amount` is missing, `type` is missing, blank or longer than 100 characters, or the body is malformed; `404` if `parentId` or `{id}`
+doesn't exist.
+
+Health check: `GET /actuator/health`.
 
 ## Configuration
 
