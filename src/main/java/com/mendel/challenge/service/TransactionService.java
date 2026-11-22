@@ -36,7 +36,7 @@ public class TransactionService {
 	@Transactional
 	public TransactionResponse create(TransactionRequest request) {
 		Transaction parent = request.parentId() == null ? null : getOrThrow(request.parentId());
-		Transaction saved = transactionRepository.save(new Transaction(request.amount(), parent));
+		Transaction saved = transactionRepository.save(new Transaction(request.amount(), request.type(), parent));
 		return TransactionResponse.from(saved);
 	}
 

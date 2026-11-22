@@ -15,14 +15,18 @@ import jakarta.persistence.Table;
  *
  * <pre>
  * transactions
- *   id         BIGINT  PRIMARY KEY        -- sequential, from the "transactions_seq" sequence
- *   amount     REAL    NOT NULL           -- Java float
- *   parent_id  BIGINT  NULL  FOREIGN KEY -> transactions(id)
+ *   id         BIGINT        PRIMARY KEY  -- sequential, from the "transactions_seq" sequence
+ *   amount     REAL          NOT NULL     -- Java float
+ *   type       VARCHAR(100)  NOT NULL
+ *   parent_id  BIGINT        NULL         -- FOREIGN KEY -> transactions(id)
  * </pre>
  */
 @Entity
 @Table(name = "transactions")
 public class Transaction {
+
+	/** Max length of {@link #type}. Shared with the request validation in TransactionRequest. */
+	public static final int TYPE_MAX_LENGTH = 100;
 
 	/**
 	 * Sequential id from a database sequence. Hibernate reserves ids in blocks, so it doesn't
@@ -34,6 +38,9 @@ public class Transaction {
 
 	@Column(nullable = false)
 	private float amount;
+
+	@Column(nullable = false, length = TYPE_MAX_LENGTH)
+	private String type;
 
 	/**
 	 * Self-reference: the parent transaction, or null for a root transaction.
@@ -48,8 +55,9 @@ public class Transaction {
 	protected Transaction() {
 	}
 
-	public Transaction(float amount, Transaction parent) {
+	public Transaction(float amount, String type, Transaction parent) {
 		this.amount = amount;
+		this.type = type;
 		this.parent = parent;
 	}
 
@@ -63,6 +71,14 @@ public class Transaction {
 
 	public void setAmount(float amount) {
 		this.amount = amount;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
 	}
 
 	public Transaction getParent() {
