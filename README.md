@@ -6,6 +6,29 @@ Runs in Docker: no local Java or Maven installation required.
 ## Requirements
 
 - [Docker](https://docs.docker.com/get-docker/) with Docker Compose v2 (`docker compose version`)
+- `make` (preinstalled on most Linux/macOS systems; on Ubuntu/WSL: `sudo apt install make`)
+- Only for the `local-*` commands: JDK 25 (`java -version`)
+
+## Quick start (Makefile)
+
+Run `make` (or `make help`) to list every command.
+
+| Command | What it does |
+|---|---|
+| `make docker` | **Full Docker run**: runs the tests, then starts the server only if they pass |
+| `make docker-server` | Builds and starts only the server in Docker (foreground, Ctrl+C to stop) |
+| `make docker-server-bg` | Same, in the background |
+| `make docker-test` | Builds and runs only the test suite in Docker |
+| `make docker-logs` | Follows the logs of the background server |
+| `make docker-stop` | Stops and removes the containers |
+| `make docker-clean` | Stops the containers and deletes the project's Docker images |
+| `make local-server` | Starts the server locally, without Docker (`./mvnw spring-boot:run`) |
+| `make local-test` | Runs the tests locally, without Docker (`./mvnw test`) |
+| `make local-clean` | Deletes the local build output (`target/`) |
+
+The `local-*` commands first check that JDK 25+ is installed and print a clear error if not.
+
+The sections below show the underlying commands, in case you prefer to run them directly.
 
 ## Running the server
 
