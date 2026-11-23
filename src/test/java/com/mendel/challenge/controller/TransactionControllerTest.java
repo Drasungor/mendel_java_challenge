@@ -20,13 +20,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 /**
- * Web-layer test (no database): starts only Spring MVC, the controller and the exception
+ * Web-layer test: starts only Spring MVC, the controller and the exception
  * handler. The service is a Mockito mock, so each test controls exactly what the service
  * returns and checks only how the controller maps it to HTTP.
  *
@@ -36,7 +35,6 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
  * - {@code convertTo}: the body deserializes into the response DTO and equals the expected one.
  */
 @WebMvcTest(TransactionController.class)
-@ActiveProfiles("test")
 class TransactionControllerTest {
 
 	private static final String BASE = "/api/transactions";

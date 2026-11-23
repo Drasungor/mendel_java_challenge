@@ -24,7 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Plain unit test (no Spring context, no database): the repository is a Mockito mock, so each
+ * Plain unit test (no Spring context): the repository is a Mockito mock, so each
  * test controls exactly what the data layer returns and checks only the service's logic.
  *
  * MockitoExtension uses strict stubs: a test fails if it stubs a repository call the service
@@ -42,7 +42,7 @@ class TransactionServiceTest {
 	// ---------- findAll ----------
 
 	@Test
-	void findAllMapsEntitiesToDtos() {
+	void findAllMapsTransactionsToDtos() {
 		Transaction root = new Transaction(10L, 5000f, "cars", null);
 		Transaction child = new Transaction(11L, 10000.5f, "shopping", root);
 		when(transactionRepository.findAll()).thenReturn(List.of(root, child));
@@ -168,7 +168,7 @@ class TransactionServiceTest {
 		UpsertResult result = transactionService.upsert(new TransactionDto(10L, 7500f, "shopping", 2L));
 
 		assertThat(result).isEqualTo(new UpsertResult(new TransactionDto(10L, 7500f, "shopping", 2L), false));
-		// The managed entity itself is modified (Hibernate dirty checking writes it on commit)
+		// The stored instance itself is modified, so no save() is needed
 		assertThat(existing.getAmount()).isEqualTo(7500f);
 		assertThat(existing.getType()).isEqualTo("shopping");
 		assertThat(existing.getParent()).isSameAs(newParent);

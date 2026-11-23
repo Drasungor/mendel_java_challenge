@@ -11,23 +11,21 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Web-layer test (no database): starts only Spring MVC + the exception handler,
+ * Web-layer test: starts only Spring MVC + the exception handler,
  * plus a test-only controller that fails on purpose.
  */
 @WebMvcTest(controllers = GlobalExceptionHandlerTest.FailingController.class)
 @Import(GlobalExceptionHandlerTest.FailingController.class)
-@ActiveProfiles("test")
 @ExtendWith(OutputCaptureExtension.class)
 class GlobalExceptionHandlerTest {
 
-	private static final String SECRET = "jdbc:h2:mem:secret-connection-details";
+	private static final String SECRET = "secret-internal-details";
 
 	@Autowired
 	private MockMvcTester mvc;

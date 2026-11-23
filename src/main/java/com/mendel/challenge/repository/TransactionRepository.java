@@ -1,33 +1,73 @@
 package com.mendel.challenge.repository;
 
 import com.mendel.challenge.model.Transaction;
+import java.util.ArrayList;
 import java.util.List;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Repository;
 
 /**
- * Data layer: Spring Data generates the implementation at runtime
- * (save, findById, findAll, existsById, deleteById, ...).
+ * Data layer: in-memory storage of transactions, keyed by id.
+ *
+ * The map holds one entry per transaction id, and saving a transaction with an existing id
+ * replaces the stored one. Lookups by type or parent scan all stored transactions.
+ *
+ * The stored instances are returned directly (not copies), so changes made to a transaction
+ * returned by {@link #findById} are visible to later reads without calling {@link #save}.
+ *
+ * A {@link ConcurrentHashMap} is used because the singleton bean is shared by all request
+ * threads. Individual operations are thread-safe; sequences of operations are not atomic.
  */
 @Repository
-public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+public class TransactionRepository {
+
+	private final Map<Long, Transaction> transactions = new ConcurrentHashMap<>();
+
+	/** Stores the transaction under its id, replacing any existing one, and returns it. */
+	public Transaction save(Transaction transaction) {
+		Objects.requireNonNull(transaction, "transaction must not be null");
+		Objects.requireNonNull(transaction.getId(), "transaction id must not be null");
+		transactions.put(transaction.getId(), transaction);
+		return transaction;
+	}
+
+	public Optional<Transaction> findById(Long id) {
+		return Optional.ofNullable(transactions.get(id));
+	}
+
+	public boolean existsById(Long id) {
+		return transactions.containsKey(id);
+	}
+
+	/** All stored transactions, in no particular order. */
+	public List<Transaction> findAll() {
+		return new ArrayList<>(transactions.values());
+	}
 
 	/**
 	 * Ids of all transactions with exactly this type (case-sensitive), in ascending order.
-	 * Selects only the id column instead of loading whole entities; the WHERE clause uses
-	 * the idx_transactions_type index. Returns an empty list if no transaction has the type.
+	 * Returns an empty list if no transaction has the type.
 	 */
-	@Query("SELECT t.id FROM Transaction t WHERE t.type = :type ORDER BY t.id")
-	List<Long> findIdsByType(String type);
+	public List<Long> findIdsByType(String type) {
+		return transactions.values().stream()
+				.filter(transaction -> Objects.equals(transaction.getType(), type))
+				.map(Transaction::getId)
+				.sorted()
+				.toList();
+	}
 
 	/**
-	 * Sum of the amounts of the direct children of the given transaction, computed by the
-	 * database: the WHERE clause first narrows the rows to that parent's children (using the
-	 * idx_transactions_parent_id index), then SUM aggregates only those rows. A single total
-	 * needs no GROUP BY, and only one number travels back instead of every child row.
-	 * COALESCE turns the SQL result for "no rows" (NULL) into 0.
+	 * Sum of the amounts of the direct children of the given transaction (grandchildren are
+	 * not included); 0 if it has none.
 	 */
-	@Query("SELECT COALESCE(SUM(t.amount), 0.0) FROM Transaction t WHERE t.parent.id = :parentId")
-	double sumAmountsByParentId(Long parentId);
+	public double sumAmountsByParentId(Long parentId) {
+		return transactions.values().stream()
+				.filter(transaction -> transaction.getParent() != null
+						&& Objects.equals(transaction.getParent().getId(), parentId))
+				.mapToDouble(Transaction::getAmount)
+				.sum();
+	}
 }

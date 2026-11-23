@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Size;
  * - {@code amount}: required. A boxed Float so a missing value arrives as null and fails
  *   @NotNull (a primitive float would silently default to 0).
  * - {@code type}: required, not blank, at most {@link Transaction#TYPE_MAX_LENGTH} characters
- *   (the same limit as the database column).
+ *   (the limit defined by the model).
  * - {@code parentId}: optional.
  */
 public record TransactionRequest(

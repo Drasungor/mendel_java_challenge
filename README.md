@@ -1,6 +1,6 @@
 # Mendel Java Challenge
 
-REST API built with **Spring Boot 4.2** on **Java 25 (LTS)**, Maven, and an in-memory **H2** database.
+REST API built with **Spring Boot 4.2** on **Java 25 (LTS)** with Maven. Data is stored in memory (no database).
 Runs in Docker: no local Java or Maven installation required.
 
 ## Requirements
@@ -48,7 +48,7 @@ curl http://localhost:8080/actuator/health     # {"status":"UP",...}
 `--build` rebuilds the image so it includes your latest code changes. Only the layers
 affected by a change are rebuilt: editing Java code does not re-download dependencies.
 
-The database lives in memory, so **all data is lost when the container stops**. No volumes
+Data is stored in memory, so **all data is lost when the server stops**. No volumes
 are needed.
 
 ## Running the tests
@@ -86,9 +86,9 @@ The runtime image:
 src/main/java/com/mendel/challenge/
 ├── ChallengeApplication.java   # entry point
 ├── controller/                 # HTTP layer: @RestController, request mapping, @Valid
-├── service/                    # business logic, @Transactional boundaries
-├── repository/                 # data layer: Spring Data JPA repositories
-├── model/                      # JPA @Entity classes
+├── service/                    # business logic
+├── repository/                 # data layer: in-memory storage (HashMap keyed by id)
+├── model/                      # domain classes
 ├── dto/                        # data records exchanged between layers (see below)
 └── exception/                  # custom exceptions + global handler (problem+json errors)
 ```
@@ -109,18 +109,19 @@ The DTOs keep HTTP details out of the service:
 
 The controller converts `TransactionRequest` → `TransactionDto` before calling the service, and
 `TransactionDto` → `TransactionResponse` before replying. The service never references the
-HTTP types, and the JPA entity (`Transaction`) never leaves the service.
+HTTP types, and the model class (`Transaction`) never leaves the service.
 
 ### Data model
 
-`Transaction` entity (`model/Transaction.java`), stored in the `transactions` table:
+`Transaction` (`model/Transaction.java`), stored in memory by `TransactionRepository` in a
+hash map keyed by id:
 
-| Column | Type | Notes |
+| Field | Type | Notes |
 |---|---|---|
-| `id` | `BIGINT` (Java `Long`) | Primary key, chosen by the client in the URL of `PUT /api/transactions/{id}` |
-| `amount` | `REAL` (Java `float`) | Required |
-| `type` | `VARCHAR(100)` (Java `String`) | Required, not blank, max 100 characters. Indexed (`idx_transactions_type`) for fast lookups by type |
-| `parent_id` | `BIGINT`, nullable | Foreign key to `transactions.id` (the parent transaction). Indexed (`idx_transactions_parent_id`) for fast lookups of a transaction's children |
+| `id` | `Long` | Unique key, chosen by the client in the URL of `PUT /api/transactions/{id}` |
+| `amount` | `float` | Required |
+| `type` | `String` | Required, not blank, max 100 characters |
+| `parent` | `Transaction`, nullable | The parent transaction (exposed as `parentId` in the API) |
 
 ### Endpoints
 
@@ -161,8 +162,7 @@ Health check: `GET /actuator/health`.
 
 ## Configuration
 
-- `src/main/resources/application.properties`: app config (port, datasource, JPA, actuator)
-- `src/test/resources/application-test.properties`: overrides for tests, activated with `@ActiveProfiles("test")`
+- `src/main/resources/application.properties`: app config (port, errors, actuator, JSON)
 
 Any property can be overridden per environment through environment variables in
 `compose.yaml`. For example, `server.port` becomes `SERVER_PORT`.
@@ -175,7 +175,3 @@ Requires JDK 25 locally (`java -version`). Maven is not needed; the wrapper down
 ./mvnw spring-boot:run    # start the server
 ./mvnw test               # run the tests
 ```
-
-Running outside Docker also enables the H2 web console at http://localhost:8080/h2-console
-(JDBC URL `jdbc:h2:mem:challengedb`, user `sa`, empty password). The console is disabled in
-Docker because H2 only accepts console connections from inside the container.

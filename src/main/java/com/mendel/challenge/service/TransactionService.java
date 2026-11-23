@@ -9,17 +9,12 @@ import com.mendel.challenge.repository.TransactionRepository;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service layer: business logic and (database) transaction boundaries.
+ * Service layer: business logic.
  * Works only with {@link TransactionDto}; it knows nothing about the HTTP request/response types.
- *
- * Note: {@code @Transactional} is Spring's database-transaction annotation and is unrelated
- * to the {@link Transaction} entity.
  */
 @Service
-@Transactional(readOnly = true)
 public class TransactionService {
 
 	private final TransactionRepository transactionRepository;
@@ -59,7 +54,6 @@ public class TransactionService {
 	 * PUT semantics: creates the transaction with the given id if it doesn't exist,
 	 * otherwise replaces all of its fields with the request data.
 	 */
-	@Transactional
 	public UpsertResult upsert(TransactionDto data) {
 		// Checked before anything else, so it applies to both creates and updates
 		if (data.id().equals(data.parentId())) {
@@ -73,8 +67,8 @@ public class TransactionService {
 			transaction.setAmount(data.amount());
 			transaction.setType(data.type());
 			transaction.setParent(parent);
-			// No save() needed: the entity is managed, so Hibernate writes the changes
-			// (UPDATE) automatically when the database transaction commits ("dirty checking").
+			// No save() needed: findById returns the stored instance itself (not a copy),
+			// so modifying it updates the stored transaction.
 			return new UpsertResult(TransactionDto.from(transaction), false);
 		}
 

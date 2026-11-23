@@ -9,10 +9,6 @@ services:
     container_name: mendel-challenge
     ports:
       - "8080:8080"
-    environment:
-      # The H2 web console only accepts connections from inside the container,
-      # so it is unreachable through the port mapping anyway. Keep it off.
-      SPRING_H2_CONSOLE_ENABLED: "false"
     restart: unless-stopped
     # Give Spring's graceful shutdown time to finish in-flight requests
     stop_grace_period: 30s

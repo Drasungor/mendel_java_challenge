@@ -31,25 +31,10 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
-		<!-- Data layer: Spring Data JPA + Hibernate -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
 		<!-- Health / info endpoints (/actuator/health) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-		<!-- In-memory database + its web console -->
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-h2console</artifactId>
 		</dependency>
 		<!-- Auto-restart on code changes during development (excluded from the packaged jar) -->
 		<dependency>
@@ -59,15 +44,10 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- Test suite: JUnit 5, AssertJ, Mockito, MockMvc, @DataJpaTest, ... -->
+		<!-- Test suite: JUnit 5, AssertJ, Mockito, MockMvc, ... -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

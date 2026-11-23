@@ -20,28 +20,26 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 /**
- * Controller ↔ service integration test (no database).
+ * Controller ↔ service integration test.
  *
  * Starts Spring MVC with the real {@link TransactionController}, the real
  * {@link TransactionService} and the real exception handler; only the repository is a
  * Mockito mock. Each test sends an HTTP request and checks the HTTP response, so it covers
  * the whole path in between: request parsing and validation, request → DTO conversion,
- * the service's logic, entity → DTO → response conversion, and exception → status mapping.
+ * the service's logic, model → DTO → response conversion, and exception → status mapping.
  *
  * Compared to the other tests:
  * - TransactionControllerTest mocks the service (controller only).
  * - TransactionServiceTest calls the service directly (no HTTP).
- * - TransactionRepositoryTest runs the real queries against H2.
+ * - TransactionRepositoryTest tests the real in-memory repository.
  */
 @WebMvcTest(TransactionController.class)
 @Import(TransactionService.class) // @WebMvcTest loads only web components; add the real service
-@ActiveProfiles("test")
 class TransactionIntegrationTest {
 
 	private static final String BASE = "/api/transactions";
@@ -154,7 +152,7 @@ class TransactionIntegrationTest {
 		Transaction parent = new Transaction(10L, 5000f, "cars", null);
 		when(transactionRepository.findById(10L)).thenReturn(Optional.of(parent));
 		when(transactionRepository.findById(11L)).thenReturn(Optional.empty());
-		// The mocked save() returns the entity it was given, like a real save of a new entity
+		// The mocked save() returns the transaction it was given, like the real save()
 		when(transactionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
 		MvcTestResult result = put("/11", """
@@ -165,7 +163,7 @@ class TransactionIntegrationTest {
 		assertThat(result).bodyJson().isStrictlyEqualTo("""
 				{"id": 11, "amount": 10000.5, "type": "shopping", "parentId": 10}
 				""");
-		// The entity built from the path id + request body is what reaches the repository
+		// The transaction built from the path id + request body is what reaches the repository
 		ArgumentCaptor<Transaction> saved = ArgumentCaptor.forClass(Transaction.class);
 		verify(transactionRepository).save(saved.capture());
 		assertThat(saved.getValue().getId()).isEqualTo(11L);

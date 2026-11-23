@@ -35,7 +35,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 
 	/**
-	 * Catch-all for unexpected errors (bugs, database failures, ...).
+	 * Catch-all for unexpected errors (bugs, ...).
 	 *
 	 * The full details (exception, message, stack trace, request) go to the server log only.
 	 * The client gets a generic message plus an errorId that matches the log entry, so a
