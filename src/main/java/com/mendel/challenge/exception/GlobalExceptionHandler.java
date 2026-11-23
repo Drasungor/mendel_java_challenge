@@ -29,6 +29,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
 	}
 
+	@ExceptionHandler(InvalidTransactionException.class)
+	public ProblemDetail handleInvalidTransaction(InvalidTransactionException ex) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+	}
+
 	/**
 	 * Catch-all for unexpected errors (bugs, database failures, ...).
 	 *

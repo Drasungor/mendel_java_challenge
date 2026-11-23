@@ -136,7 +136,7 @@ A transaction looks like `{"id": 1, "amount": 10.5, "type": "cars", "parentId": 
 `PUT` replaces **all** fields: omitting `parentId` on an existing transaction removes its parent.
 
 Errors: `400` if `amount` is missing, `type` is missing, blank or longer than 100 characters,
-`{id}` is not a number or is negative (PUT), or the body is malformed; `404` if `parentId` doesn't exist (or, for
+`{id}` is not a number or is negative (PUT), `parentId` equals `{id}` (a transaction can't be its own parent), or the body is malformed; `404` if `parentId` doesn't exist (or, for
 `GET`, if `{id}` doesn't exist).
 
 Example:
