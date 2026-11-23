@@ -6,6 +6,7 @@ import com.mendel.challenge.exception.ResourceNotFoundException;
 import com.mendel.challenge.model.Transaction;
 import com.mendel.challenge.repository.TransactionRepository;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,11 +34,32 @@ public class TransactionService {
 		return TransactionResponse.from(getOrThrow(id));
 	}
 
+	/**
+	 * PUT semantics: creates the transaction with the given id if it doesn't exist,
+	 * otherwise replaces all of its fields with the request data.
+	 */
 	@Transactional
-	public TransactionResponse create(TransactionRequest request) {
+	public UpsertResult upsert(Long id, TransactionRequest request) {
 		Transaction parent = request.parentId() == null ? null : getOrThrow(request.parentId());
-		Transaction saved = transactionRepository.save(new Transaction(request.amount(), request.type(), parent));
-		return TransactionResponse.from(saved);
+
+		Optional<Transaction> existing = transactionRepository.findById(id);
+		if (existing.isPresent()) {
+			Transaction transaction = existing.get();
+			transaction.setAmount(request.amount());
+			transaction.setType(request.type());
+			transaction.setParent(parent);
+			// No save() needed: the entity is managed, so Hibernate writes the changes
+			// (UPDATE) automatically when the database transaction commits ("dirty checking").
+			return new UpsertResult(TransactionResponse.from(transaction), false);
+		}
+
+		Transaction created = transactionRepository.save(
+				new Transaction(id, request.amount(), request.type(), parent));
+		return new UpsertResult(TransactionResponse.from(created), true);
+	}
+
+	/** Result of {@link #upsert}: the stored transaction, and whether it was newly created. */
+	public record UpsertResult(TransactionResponse transaction, boolean created) {
 	}
 
 	private Transaction getOrThrow(Long id) {

@@ -102,7 +102,7 @@ Dependencies flow **controller → service → repository** and are wired by Spr
 
 | Column | Type | Notes |
 |---|---|---|
-| `id` | `BIGINT` (Java `Long`) | Primary key, sequential (1, 2, 3…), generated from the `transactions_seq` database sequence |
+| `id` | `BIGINT` (Java `Long`) | Primary key, chosen by the client in the URL of `PUT /api/transactions/{id}` |
 | `amount` | `REAL` (Java `float`) | Required |
 | `type` | `VARCHAR(100)` (Java `String`) | Required, not blank, max 100 characters |
 | `parent_id` | `BIGINT`, nullable | Foreign key to `transactions.id` (the parent transaction) |
@@ -111,13 +111,26 @@ Dependencies flow **controller → service → repository** and are wired by Spr
 
 | Method | Path | Body | Response |
 |---|---|---|---|
-| `POST` | `/api/transactions` | `{"amount": 10.5, "type": "cars", "parentId": 123}` (`parentId` optional) | `201` + the created transaction |
+| `PUT` | `/api/transactions/{id}` | `{"amount": 10.5, "type": "cars", "parentId": 123}` (`parentId` optional) | `201` + the transaction if it was created, `200` if an existing one was replaced |
 | `GET` | `/api/transactions` | | `200` + list of transactions |
 | `GET` | `/api/transactions/{id}` | | `200` + the transaction, or `404` |
 
 A transaction looks like `{"id": 1, "amount": 10.5, "type": "cars", "parentId": null}`.
-Errors: `400` if `amount` is missing, `type` is missing, blank or longer than 100 characters, or the body is malformed; `404` if `parentId` or `{id}`
-doesn't exist.
+`PUT` replaces **all** fields: omitting `parentId` on an existing transaction removes its parent.
+
+Errors: `400` if `amount` is missing, `type` is missing, blank or longer than 100 characters,
+`{id}` is not a number or is negative (PUT), or the body is malformed; `404` if `parentId` doesn't exist (or, for
+`GET`, if `{id}` doesn't exist).
+
+Example:
+
+```bash
+curl -X PUT http://localhost:8080/api/transactions/10 \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 5000, "type": "cars"}'
+
+curl http://localhost:8080/api/transactions
+```
 
 Health check: `GET /actuator/health`.
 
