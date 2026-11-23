@@ -2,6 +2,7 @@ package com.mendel.challenge.service;
 
 import com.mendel.challenge.dto.TransactionDto;
 import com.mendel.challenge.dto.UpsertResult;
+import com.mendel.challenge.exception.InvalidTransactionException;
 import com.mendel.challenge.exception.ResourceNotFoundException;
 import com.mendel.challenge.model.Transaction;
 import com.mendel.challenge.repository.TransactionRepository;
@@ -60,6 +61,10 @@ public class TransactionService {
 	 */
 	@Transactional
 	public UpsertResult upsert(TransactionDto data) {
+		// Checked before anything else, so it applies to both creates and updates
+		if (data.id().equals(data.parentId())) {
+			throw new InvalidTransactionException("Transaction " + data.id() + " cannot be its own parent");
+		}
 		Transaction parent = data.parentId() == null ? null : getOrThrow(data.parentId());
 
 		Optional<Transaction> existing = transactionRepository.findById(data.id());
