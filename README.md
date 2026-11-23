@@ -103,6 +103,7 @@ The DTOs keep HTTP details out of the service:
 | `TransactionRequest` | controller | HTTP request body, with its validation rules |
 | `TransactionResponse` | controller | HTTP response body (the JSON clients receive) |
 | `TransactionTypeListResponse` | controller | HTTP response body of `GET /types/{type}`: `{"ids": [...]}` |
+| `ChildrenTransactionSumResponse` | controller | HTTP response body of `GET /sum/{id}`: `{"sum": ...}` |
 | `TransactionDto` | controller ↔ service | The service's own input/output type |
 | `UpsertResult` | controller ↔ service | Result of a create-or-replace: the `TransactionDto` + whether it was created |
 
@@ -119,7 +120,7 @@ HTTP types, and the JPA entity (`Transaction`) never leaves the service.
 | `id` | `BIGINT` (Java `Long`) | Primary key, chosen by the client in the URL of `PUT /api/transactions/{id}` |
 | `amount` | `REAL` (Java `float`) | Required |
 | `type` | `VARCHAR(100)` (Java `String`) | Required, not blank, max 100 characters. Indexed (`idx_transactions_type`) for fast lookups by type |
-| `parent_id` | `BIGINT`, nullable | Foreign key to `transactions.id` (the parent transaction) |
+| `parent_id` | `BIGINT`, nullable | Foreign key to `transactions.id` (the parent transaction). Indexed (`idx_transactions_parent_id`) for fast lookups of a transaction's children |
 
 ### Endpoints
 
@@ -129,6 +130,7 @@ HTTP types, and the JPA entity (`Transaction`) never leaves the service.
 | `GET` | `/api/transactions` | | `200` + list of transactions |
 | `GET` | `/api/transactions/{id}` | | `200` + the transaction, or `404` |
 | `GET` | `/api/transactions/types/{type}` | | `200` + the ids of all transactions with that type, e.g. `{"ids": [3, 10]}`. `{"ids": []}` if there are none |
+| `GET` | `/api/transactions/sum/{id}` | | `200` + the sum of the amounts of the transaction's **direct children**, e.g. `{"sum": 9502.5}`. `{"sum": 0.0}` if it has no children, `404` if the transaction doesn't exist |
 
 A transaction looks like `{"id": 1, "amount": 10.5, "type": "cars", "parentId": null}`.
 `PUT` replaces **all** fields: omitting `parentId` on an existing transaction removes its parent.
@@ -147,6 +149,8 @@ curl -X PUT http://localhost:8080/api/transactions/10 \
 curl http://localhost:8080/api/transactions
 
 curl http://localhost:8080/api/transactions/types/cars
+
+curl http://localhost:8080/api/transactions/sum/10
 ```
 
 Type matching is exact and case-sensitive (`cars` ≠ `Cars`). Any type is accepted: an unknown

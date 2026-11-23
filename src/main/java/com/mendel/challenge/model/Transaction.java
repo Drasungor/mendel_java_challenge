@@ -19,13 +19,17 @@ import jakarta.persistence.Table;
  *   type       VARCHAR(100)  NOT NULL
  *   parent_id  BIGINT        NULL         -- FOREIGN KEY -> transactions(id)
  *
- * INDEX idx_transactions_type (type)      -- fast lookups by type
+ * INDEX idx_transactions_type      (type)       -- fast lookups by type
+ * INDEX idx_transactions_parent_id (parent_id)  -- fast lookups of a transaction's children
  * </pre>
  */
 @Entity
 @Table(
 		name = "transactions",
-		indexes = @Index(name = "idx_transactions_type", columnList = "type"))
+		indexes = {
+				@Index(name = "idx_transactions_type", columnList = "type"),
+				@Index(name = "idx_transactions_parent_id", columnList = "parent_id")
+		})
 public class Transaction {
 
 	/** Max length of {@link #type}. Shared with the request validation in TransactionRequest. */
