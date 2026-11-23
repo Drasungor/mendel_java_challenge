@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -17,10 +18,14 @@ import jakarta.persistence.Table;
  *   amount     REAL          NOT NULL     -- Java float
  *   type       VARCHAR(100)  NOT NULL
  *   parent_id  BIGINT        NULL         -- FOREIGN KEY -> transactions(id)
+ *
+ * INDEX idx_transactions_type (type)      -- fast lookups by type
  * </pre>
  */
 @Entity
-@Table(name = "transactions")
+@Table(
+		name = "transactions",
+		indexes = @Index(name = "idx_transactions_type", columnList = "type"))
 public class Transaction {
 
 	/** Max length of {@link #type}. Shared with the request validation in TransactionRequest. */

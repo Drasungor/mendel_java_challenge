@@ -36,6 +36,14 @@ public class TransactionService {
 	}
 
 	/**
+	 * Ids of the transactions with the given type. Types are free-form (there is no list of
+	 * valid types), so an unknown type is not an error: it simply returns an empty list.
+	 */
+	public List<Long> findIdsByType(String type) {
+		return transactionRepository.findIdsByType(type);
+	}
+
+	/**
 	 * PUT semantics: creates the transaction with the given id if it doesn't exist,
 	 * otherwise replaces all of its fields with the request data.
 	 */
