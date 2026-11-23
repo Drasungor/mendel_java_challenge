@@ -1,7 +1,7 @@
 package com.mendel.challenge.service;
 
-import com.mendel.challenge.dto.TransactionRequest;
-import com.mendel.challenge.dto.TransactionResponse;
+import com.mendel.challenge.dto.TransactionDto;
+import com.mendel.challenge.dto.UpsertResult;
 import com.mendel.challenge.exception.ResourceNotFoundException;
 import com.mendel.challenge.model.Transaction;
 import com.mendel.challenge.repository.TransactionRepository;
@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service layer: business logic and (database) transaction boundaries.
+ * Works only with {@link TransactionDto}; it knows nothing about the HTTP request/response types.
  *
  * Note: {@code @Transactional} is Spring's database-transaction annotation and is unrelated
  * to the {@link Transaction} entity.
@@ -26,12 +27,12 @@ public class TransactionService {
 		this.transactionRepository = transactionRepository;
 	}
 
-	public List<TransactionResponse> findAll() {
-		return transactionRepository.findAll().stream().map(TransactionResponse::from).toList();
+	public List<TransactionDto> findAll() {
+		return transactionRepository.findAll().stream().map(TransactionDto::from).toList();
 	}
 
-	public TransactionResponse findById(Long id) {
-		return TransactionResponse.from(getOrThrow(id));
+	public TransactionDto findById(Long id) {
+		return TransactionDto.from(getOrThrow(id));
 	}
 
 	/**
@@ -39,27 +40,23 @@ public class TransactionService {
 	 * otherwise replaces all of its fields with the request data.
 	 */
 	@Transactional
-	public UpsertResult upsert(Long id, TransactionRequest request) {
-		Transaction parent = request.parentId() == null ? null : getOrThrow(request.parentId());
+	public UpsertResult upsert(TransactionDto data) {
+		Transaction parent = data.parentId() == null ? null : getOrThrow(data.parentId());
 
-		Optional<Transaction> existing = transactionRepository.findById(id);
+		Optional<Transaction> existing = transactionRepository.findById(data.id());
 		if (existing.isPresent()) {
 			Transaction transaction = existing.get();
-			transaction.setAmount(request.amount());
-			transaction.setType(request.type());
+			transaction.setAmount(data.amount());
+			transaction.setType(data.type());
 			transaction.setParent(parent);
 			// No save() needed: the entity is managed, so Hibernate writes the changes
 			// (UPDATE) automatically when the database transaction commits ("dirty checking").
-			return new UpsertResult(TransactionResponse.from(transaction), false);
+			return new UpsertResult(TransactionDto.from(transaction), false);
 		}
 
 		Transaction created = transactionRepository.save(
-				new Transaction(id, request.amount(), request.type(), parent));
-		return new UpsertResult(TransactionResponse.from(created), true);
-	}
-
-	/** Result of {@link #upsert}: the stored transaction, and whether it was newly created. */
-	public record UpsertResult(TransactionResponse transaction, boolean created) {
+				new Transaction(data.id(), data.amount(), data.type(), parent));
+		return new UpsertResult(TransactionDto.from(created), true);
 	}
 
 	private Transaction getOrThrow(Long id) {

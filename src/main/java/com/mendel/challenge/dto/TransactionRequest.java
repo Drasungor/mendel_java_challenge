@@ -6,7 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * Request body of PUT /api/transactions/{id} (create or replace): {"amount": 10.5, "type": "cars", "parentId": 123}.
+ * HTTP request body of PUT /api/transactions/{id} (create or replace):
+ * {"amount": 10.5, "type": "cars", "parentId": 123}. Used by the controller only.
  *
  * - {@code amount}: required. A boxed Float so a missing value arrives as null and fails
  *   @NotNull (a primitive float would silently default to 0).
@@ -18,4 +19,9 @@ public record TransactionRequest(
 		@NotNull Float amount,
 		@NotBlank @Size(max = Transaction.TYPE_MAX_LENGTH) String type,
 		Long parentId) {
+
+	/** Converts this request into the service-layer type. The id comes from the URL path. */
+	public TransactionDto toDto(Long id) {
+		return new TransactionDto(id, amount, type, parentId);
+	}
 }

@@ -89,12 +89,25 @@ src/main/java/com/mendel/challenge/
 ├── service/                    # business logic, @Transactional boundaries
 ├── repository/                 # data layer: Spring Data JPA repositories
 ├── model/                      # JPA @Entity classes
-├── dto/                        # request/response records exposed by the API
+├── dto/                        # data records exchanged between layers (see below)
 └── exception/                  # custom exceptions + global handler (problem+json errors)
 ```
 
 Dependencies flow **controller → service → repository** and are wired by Spring through
 **constructor injection** (final fields, single constructor, no `@Autowired` needed).
+
+The DTOs keep HTTP details out of the service:
+
+| DTO | Used by | Purpose |
+|---|---|---|
+| `TransactionRequest` | controller | HTTP request body, with its validation rules |
+| `TransactionResponse` | controller | HTTP response body (the JSON clients receive) |
+| `TransactionDto` | controller ↔ service | The service's own input/output type |
+| `UpsertResult` | controller ↔ service | Result of a create-or-replace: the `TransactionDto` + whether it was created |
+
+The controller converts `TransactionRequest` → `TransactionDto` before calling the service, and
+`TransactionDto` → `TransactionResponse` before replying. The service never references the
+HTTP types, and the JPA entity (`Transaction`) never leaves the service.
 
 ### Data model
 
