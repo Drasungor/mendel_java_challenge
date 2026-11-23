@@ -102,6 +102,7 @@ The DTOs keep HTTP details out of the service:
 |---|---|---|
 | `TransactionRequest` | controller | HTTP request body, with its validation rules |
 | `TransactionResponse` | controller | HTTP response body (the JSON clients receive) |
+| `TransactionTypeListResponse` | controller | HTTP response body of `GET /types/{type}`: `{"ids": [...]}` |
 | `TransactionDto` | controller ↔ service | The service's own input/output type |
 | `UpsertResult` | controller ↔ service | Result of a create-or-replace: the `TransactionDto` + whether it was created |
 
@@ -117,7 +118,7 @@ HTTP types, and the JPA entity (`Transaction`) never leaves the service.
 |---|---|---|
 | `id` | `BIGINT` (Java `Long`) | Primary key, chosen by the client in the URL of `PUT /api/transactions/{id}` |
 | `amount` | `REAL` (Java `float`) | Required |
-| `type` | `VARCHAR(100)` (Java `String`) | Required, not blank, max 100 characters |
+| `type` | `VARCHAR(100)` (Java `String`) | Required, not blank, max 100 characters. Indexed (`idx_transactions_type`) for fast lookups by type |
 | `parent_id` | `BIGINT`, nullable | Foreign key to `transactions.id` (the parent transaction) |
 
 ### Endpoints
@@ -127,6 +128,7 @@ HTTP types, and the JPA entity (`Transaction`) never leaves the service.
 | `PUT` | `/api/transactions/{id}` | `{"amount": 10.5, "type": "cars", "parentId": 123}` (`parentId` optional) | `201` + the transaction if it was created, `200` if an existing one was replaced |
 | `GET` | `/api/transactions` | | `200` + list of transactions |
 | `GET` | `/api/transactions/{id}` | | `200` + the transaction, or `404` |
+| `GET` | `/api/transactions/types/{type}` | | `200` + the ids of all transactions with that type, e.g. `{"ids": [3, 10]}`. `{"ids": []}` if there are none |
 
 A transaction looks like `{"id": 1, "amount": 10.5, "type": "cars", "parentId": null}`.
 `PUT` replaces **all** fields: omitting `parentId` on an existing transaction removes its parent.
@@ -143,7 +145,13 @@ curl -X PUT http://localhost:8080/api/transactions/10 \
   -d '{"amount": 5000, "type": "cars"}'
 
 curl http://localhost:8080/api/transactions
+
+curl http://localhost:8080/api/transactions/types/cars
 ```
+
+Type matching is exact and case-sensitive (`cars` ≠ `Cars`). Any type is accepted: an unknown
+type returns `{"ids": []}`, not an error. Types with spaces or special characters must be URL-encoded
+(`home office` → `/types/home%20office`).
 
 Health check: `GET /actuator/health`.
 

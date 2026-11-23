@@ -2,6 +2,7 @@ package com.mendel.challenge.controller;
 
 import com.mendel.challenge.dto.TransactionRequest;
 import com.mendel.challenge.dto.TransactionResponse;
+import com.mendel.challenge.dto.TransactionTypeListResponse;
 import com.mendel.challenge.dto.UpsertResult;
 import com.mendel.challenge.service.TransactionService;
 import jakarta.validation.Valid;
@@ -42,6 +43,12 @@ public class TransactionController {
 	@GetMapping("/{id}")
 	public TransactionResponse findById(@PathVariable Long id) {
 		return TransactionResponse.from(transactionService.findById(id));
+	}
+
+	/** Ids of all transactions of the given type; an empty array if there are none. */
+	@GetMapping("/types/{type}")
+	public TransactionTypeListResponse findIdsByType(@PathVariable String type) {
+		return TransactionTypeListResponse.from(transactionService.findIdsByType(type));
 	}
 
 	/**
