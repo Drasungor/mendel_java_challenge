@@ -44,6 +44,17 @@ public class TransactionService {
 	}
 
 	/**
+	 * Sum of the amounts of the direct children of the given transaction; 0 if it has none.
+	 * Unlike types, transactions are real records, so an unknown id is a 404 rather than 0.
+	 */
+	public float sumChildrenAmounts(Long id) {
+		if (!transactionRepository.existsById(id)) {
+			throw notFound(id);
+		}
+		return (float) transactionRepository.sumAmountsByParentId(id);
+	}
+
+	/**
 	 * PUT semantics: creates the transaction with the given id if it doesn't exist,
 	 * otherwise replaces all of its fields with the request data.
 	 */
@@ -68,7 +79,10 @@ public class TransactionService {
 	}
 
 	private Transaction getOrThrow(Long id) {
-		return transactionRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Transaction " + id + " not found"));
+		return transactionRepository.findById(id).orElseThrow(() -> notFound(id));
+	}
+
+	private static ResourceNotFoundException notFound(Long id) {
+		return new ResourceNotFoundException("Transaction " + id + " not found");
 	}
 }

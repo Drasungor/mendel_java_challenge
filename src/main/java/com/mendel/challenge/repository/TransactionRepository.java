@@ -20,4 +20,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 	 */
 	@Query("SELECT t.id FROM Transaction t WHERE t.type = :type ORDER BY t.id")
 	List<Long> findIdsByType(String type);
+
+	/**
+	 * Sum of the amounts of the direct children of the given transaction, computed by the
+	 * database: the WHERE clause first narrows the rows to that parent's children (using the
+	 * idx_transactions_parent_id index), then SUM aggregates only those rows. A single total
+	 * needs no GROUP BY, and only one number travels back instead of every child row.
+	 * COALESCE turns the SQL result for "no rows" (NULL) into 0.
+	 */
+	@Query("SELECT COALESCE(SUM(t.amount), 0.0) FROM Transaction t WHERE t.parent.id = :parentId")
+	double sumAmountsByParentId(Long parentId);
 }

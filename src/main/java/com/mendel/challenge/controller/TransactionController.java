@@ -1,5 +1,6 @@
 package com.mendel.challenge.controller;
 
+import com.mendel.challenge.dto.ChildrenTransactionSumResponse;
 import com.mendel.challenge.dto.TransactionRequest;
 import com.mendel.challenge.dto.TransactionResponse;
 import com.mendel.challenge.dto.TransactionTypeListResponse;
@@ -49,6 +50,12 @@ public class TransactionController {
 	@GetMapping("/types/{type}")
 	public TransactionTypeListResponse findIdsByType(@PathVariable String type) {
 		return TransactionTypeListResponse.from(transactionService.findIdsByType(type));
+	}
+
+	/** Sum of the amounts of the transaction's direct children; 404 if the transaction doesn't exist. */
+	@GetMapping("/sum/{id}")
+	public ChildrenTransactionSumResponse sumChildrenAmounts(@PathVariable Long id) {
+		return ChildrenTransactionSumResponse.from(transactionService.sumChildrenAmounts(id));
 	}
 
 	/**
