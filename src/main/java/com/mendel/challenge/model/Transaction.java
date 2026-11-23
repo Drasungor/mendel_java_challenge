@@ -3,8 +3,6 @@ package com.mendel.challenge.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -15,7 +13,7 @@ import jakarta.persistence.Table;
  *
  * <pre>
  * transactions
- *   id         BIGINT        PRIMARY KEY  -- sequential, from the "transactions_seq" sequence
+ *   id         BIGINT        PRIMARY KEY  -- assigned by the client (PUT /api/transactions/{id})
  *   amount     REAL          NOT NULL     -- Java float
  *   type       VARCHAR(100)  NOT NULL
  *   parent_id  BIGINT        NULL         -- FOREIGN KEY -> transactions(id)
@@ -28,12 +26,8 @@ public class Transaction {
 	/** Max length of {@link #type}. Shared with the request validation in TransactionRequest. */
 	public static final int TYPE_MAX_LENGTH = 100;
 
-	/**
-	 * Sequential id from a database sequence. Hibernate reserves ids in blocks, so it doesn't
-	 * need a database round trip per insert, and can batch inserts.
-	 */
+	/** Assigned, not generated: the client chooses the id in PUT /api/transactions/{id}. */
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	private Long id;
 
 	@Column(nullable = false)
@@ -55,7 +49,8 @@ public class Transaction {
 	protected Transaction() {
 	}
 
-	public Transaction(float amount, String type, Transaction parent) {
+	public Transaction(Long id, float amount, String type, Transaction parent) {
+		this.id = id;
 		this.amount = amount;
 		this.type = type;
 		this.parent = parent;
